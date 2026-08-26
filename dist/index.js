@@ -25,12 +25,10 @@ function getTemperatureCategory(temperature) {
 }
 
 // src/location/location-detector.ts
-function getUserLocation() {
+function getUserLocation(timeoutMs = 1e4) {
   return new Promise((resolve, reject) => {
-    if (!navigator.geolocation) {
-      reject(
-        new Error("Geolocation is not supported by this browser.")
-      );
+    if (typeof navigator === "undefined" || !navigator.geolocation) {
+      reject(new Error("Geolocation is not supported by this browser."));
       return;
     }
     navigator.geolocation.getCurrentPosition(
@@ -44,6 +42,10 @@ function getUserLocation() {
       },
       (error) => {
         reject(error);
+      },
+      {
+        timeout: timeoutMs,
+        maximumAge: 3e5
       }
     );
   });
@@ -115,27 +117,77 @@ function mapWeatherCodeToCategory(weatherCode) {
 }
 
 // src/context/context-builder.ts
-async function buildUserContext() {
+var DEFAULT_FALLBACK_LOCATION = {
+  latitude: 0,
+  longitude: 0,
+  accuracy: 0,
+  city: null,
+  country: null,
+  countryCode: null,
+  region: null,
+  postcode: null
+};
+async function buildUserContext(options) {
   const time = getTimePeriod(/* @__PURE__ */ new Date());
-  const location = await getUserLocation();
-  const [geocodedLocation, weather] = await Promise.all([
-    reverseGeocode(location),
-    getCurrentWeather(location)
-  ]);
-  const weatherCategory = mapWeatherCodeToCategory(weather.weatherCode);
-  const temperatureCategory = getTemperatureCategory(weather.temperature);
+  let location;
+  let rawCoords = null;
+  try {
+    const userLoc = await getUserLocation();
+    rawCoords = userLoc;
+    location = {
+      ...DEFAULT_FALLBACK_LOCATION,
+      ...userLoc,
+      ...options?.fallbackLocation ?? {}
+    };
+  } catch {
+    if (options?.fallbackLocation && typeof options.fallbackLocation.latitude === "number" && typeof options.fallbackLocation.longitude === "number") {
+      rawCoords = {
+        latitude: options.fallbackLocation.latitude,
+        longitude: options.fallbackLocation.longitude
+      };
+      location = {
+        ...DEFAULT_FALLBACK_LOCATION,
+        ...options.fallbackLocation
+      };
+    } else {
+      location = {
+        ...DEFAULT_FALLBACK_LOCATION,
+        ...options?.fallbackLocation ?? {}
+      };
+    }
+  }
+  let weatherCategory = "sunny";
+  let tempValue = 22;
+  let tempCategory = "comfortable";
+  if (rawCoords && (rawCoords.latitude !== 0 || rawCoords.longitude !== 0)) {
+    try {
+      const [geocodedResult, weatherResult] = await Promise.allSettled([
+        reverseGeocode(rawCoords),
+        getCurrentWeather(rawCoords)
+      ]);
+      if (geocodedResult.status === "fulfilled" && geocodedResult.value) {
+        location = {
+          ...location,
+          ...geocodedResult.value
+        };
+      }
+      if (weatherResult.status === "fulfilled" && weatherResult.value) {
+        weatherCategory = mapWeatherCodeToCategory(weatherResult.value.weatherCode);
+        tempValue = weatherResult.value.temperature;
+        tempCategory = getTemperatureCategory(weatherResult.value.temperature);
+      }
+    } catch {
+    }
+  }
   return {
     time,
-    location: {
-      ...location,
-      ...geocodedLocation
-    },
+    location,
     weather: {
       category: weatherCategory
     },
     temperature: {
-      value: weather.temperature,
-      category: temperatureCategory
+      value: tempValue,
+      category: tempCategory
     }
   };
 }
@@ -292,31 +344,276 @@ function getFullPersonalizedMessage(context) {
   return `${greeting}! ${environmentMessage}`;
 }
 
+// src/ui/dynamic-ui-engine.ts
+var timeUI = {
+  morning: {
+    theme: "morning",
+    background: "morning",
+    icon: "sunrise"
+  },
+  afternoon: {
+    theme: "day",
+    background: "day",
+    icon: "sun"
+  },
+  evening: {
+    theme: "evening",
+    background: "evening",
+    icon: "sunset"
+  },
+  night: {
+    theme: "night",
+    background: "night",
+    icon: "moon"
+  }
+};
+var weatherUI = {
+  sunny: {
+    background: "sunny",
+    icon: "sun"
+  },
+  rainy: {
+    background: "rainy",
+    icon: "cloud-rain"
+  },
+  cloudy: {
+    background: "cloudy",
+    icon: "cloud"
+  },
+  stormy: {
+    background: "stormy",
+    icon: "cloud-lightning"
+  }
+};
+var temperatureTheme = {
+  cold: "cold",
+  comfortable: "comfortable",
+  hot: "hot"
+};
+function getDynamicUI(context) {
+  const time = context.time;
+  const weather = context.weather.category;
+  const temperature = context.temperature.category;
+  const timeConfig = timeUI[time];
+  const weatherConfig = weatherUI[weather];
+  return {
+    theme: `${timeConfig.theme}-${temperatureTheme[temperature]}`,
+    background: `${timeConfig.background}-${weatherConfig.background}`,
+    icon: weatherConfig.icon
+  };
+}
+
+// src/content/context-content-engine.ts
+var weatherContent = {
+  sunny: {
+    title: "Beautiful weather",
+    message: "It's a great time to enjoy some outdoor activities."
+  },
+  rainy: {
+    title: "Rainy weather",
+    message: "It may be a good time to enjoy indoor activities."
+  },
+  cloudy: {
+    title: "Cloudy day",
+    message: "The weather is mild and comfortable for your plans."
+  },
+  stormy: {
+    title: "Stormy weather",
+    message: "Consider staying indoors and keeping yourself safe."
+  }
+};
+var temperatureContent = {
+  cold: "Consider staying warm and dressing appropriately.",
+  comfortable: "The temperature is comfortable for your daily activities.",
+  hot: "Stay hydrated and avoid spending too much time in extreme heat."
+};
+function getContextContent(context) {
+  const weather = context.weather.category;
+  const temperature = context.temperature.category;
+  const weatherMessage = weatherContent[weather];
+  const temperatureMessage = temperatureContent[temperature];
+  return {
+    title: weatherMessage.title,
+    message: `${weatherMessage.message} ${temperatureMessage}`
+  };
+}
+
+// src/recommendations/local-recommendation-engine.ts
+function getLocalRecommendations(context) {
+  const recommendations = [];
+  const city = context.location.city;
+  const country = context.location.country;
+  const locationName = city ?? country;
+  const weather = context.weather.category;
+  const temperature = context.temperature.category;
+  if (locationName) {
+    recommendations.push({
+      title: `Explore ${locationName}`,
+      message: `Discover activities and places around ${locationName}.`
+    });
+  }
+  if (weather === "rainy") {
+    recommendations.push({
+      title: "Indoor activities",
+      message: "Consider exploring indoor places and activities nearby because of the rain."
+    });
+  }
+  if (weather === "stormy") {
+    recommendations.push({
+      title: "Stay safe",
+      message: "Avoid unnecessary travel and consider staying indoors while the weather is stormy."
+    });
+  }
+  if (weather === "sunny") {
+    recommendations.push({
+      title: "Outdoor activities",
+      message: "This may be a good time to explore outdoor places nearby."
+    });
+  }
+  if (temperature === "hot") {
+    recommendations.push({
+      title: "Beat the heat",
+      message: "Look for nearby shaded or indoor places and remember to stay hydrated."
+    });
+  }
+  if (temperature === "cold") {
+    recommendations.push({
+      title: "Stay warm",
+      message: "Consider nearby indoor or warm places where you can stay comfortable."
+    });
+  }
+  return recommendations;
+}
+
+// src/personalization/personalized-experience.ts
+function getPersonalizedExperience(context) {
+  const ui = getDynamicUI(context);
+  const content = getContextContent(context);
+  const recommendations = getLocalRecommendations(context);
+  return {
+    ui,
+    content,
+    recommendations
+  };
+}
+
+// src/core/cache-manager.ts
+var DEFAULT_CACHE_KEY = "web_personalization_context_cache";
+var memoryCache = null;
+function getCachedContext() {
+  const now = Date.now();
+  if (memoryCache) {
+    if (now < memoryCache.expiresAt) {
+      return memoryCache.context;
+    }
+    memoryCache = null;
+  }
+  if (typeof window !== "undefined" && typeof window.sessionStorage !== "undefined") {
+    try {
+      const stored = window.sessionStorage.getItem(DEFAULT_CACHE_KEY);
+      if (stored) {
+        const parsed = JSON.parse(stored);
+        if (now < parsed.expiresAt) {
+          memoryCache = parsed;
+          return parsed.context;
+        }
+        window.sessionStorage.removeItem(DEFAULT_CACHE_KEY);
+      }
+    } catch {
+    }
+  }
+  return null;
+}
+function setCachedContext(context, timeoutMs = 6e5) {
+  const now = Date.now();
+  const entry = {
+    context,
+    timestamp: now,
+    expiresAt: now + timeoutMs
+  };
+  memoryCache = entry;
+  if (typeof window !== "undefined" && typeof window.sessionStorage !== "undefined") {
+    try {
+      window.sessionStorage.setItem(DEFAULT_CACHE_KEY, JSON.stringify(entry));
+    } catch {
+    }
+  }
+}
+function clearCache() {
+  memoryCache = null;
+  if (typeof window !== "undefined" && typeof window.sessionStorage !== "undefined") {
+    try {
+      window.sessionStorage.removeItem(DEFAULT_CACHE_KEY);
+    } catch {
+    }
+  }
+}
+
 // src/personalization/personalize.ts
-async function personalize() {
-  const context = await buildUserContext();
-  return getFullPersonalizedMessage(context);
+async function personalize(options) {
+  const enableCache = options?.enableCache ?? true;
+  const cacheTimeoutMs = options?.cacheTimeoutMs ?? 6e5;
+  const includeExperience = options?.includeExperience ?? true;
+  let context = null;
+  if (enableCache) {
+    context = getCachedContext();
+  }
+  if (!context) {
+    context = await buildUserContext(options);
+    if (enableCache) {
+      setCachedContext(context, cacheTimeoutMs);
+    }
+  }
+  const message = getFullPersonalizedMessage(context);
+  const result = {
+    message,
+    context
+  };
+  if (includeExperience) {
+    result.experience = getPersonalizedExperience(context);
+  }
+  return result;
+}
+
+// src/location/location-engine.ts
+function isValidCoordinates(coordinates) {
+  const { latitude, longitude } = coordinates;
+  return latitude >= -90 && latitude <= 90 && longitude >= -180 && longitude <= 180;
 }
 
 // src/index.ts
 var packageName = "web-personalization";
 export {
   buildUserContext,
+  clearCache,
+  getCachedContext,
+  getContextContent,
+  getCurrentWeather,
+  getDynamicUI,
   getEnvironmentMessage,
   getFullPersonalizedMessage,
   getGreeting,
+  getLocalRecommendations,
   getLocationMessage,
   getLocationWeatherMessage,
   getLocationWeatherTemperatureMessage,
+  getPersonalizedExperience,
   getPersonalizedGreeting,
+  getTemperatureCategory,
   getTemperatureMessage,
   getTimeLocationMessage,
+  getTimePeriod,
   getTimeTemperatureMessage,
   getTimeWeatherMessage,
   getTimeWeatherTemperatureMessage,
+  getUserLocation,
   getWeatherMessage,
   getWeatherTemperatureMessage,
+  isValidCoordinates,
+  mapWeatherCodeToCategory,
   packageName,
-  personalize
+  personalize,
+  reverseGeocode,
+  setCachedContext
 };
 //# sourceMappingURL=index.js.map

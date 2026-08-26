@@ -79,3 +79,16 @@ export interface PersonalizedExperience {
   content: ContextContent;
   recommendations: LocalRecommendation[];
 }
+
+export interface PersonalizedResult {
+  message: string;
+  context: UserContext;
+  experience?: PersonalizedExperience;
+}
+
+export interface PersonalizeOptions {
+  fallbackLocation?: Partial<UserContextLocation>;
+  enableCache?: boolean;
+  cacheTimeoutMs?: number;
+  includeExperience?: boolean;
+}
