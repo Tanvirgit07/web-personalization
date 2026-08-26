@@ -56,3 +56,26 @@ export interface UserContext {
   weather: UserContextWeather;
   temperature: UserContextTemperature;
 }
+
+
+export interface DynamicUI {
+  theme: string;
+  background: string;
+  icon: string;
+}
+
+export interface ContextContent {
+  title: string;
+  message: string;
+}
+
+export interface LocalRecommendation {
+  title: string;
+  message: string;
+}
+
+export interface PersonalizedExperience {
+  ui: DynamicUI;
+  content: ContextContent;
+  recommendations: LocalRecommendation[];
+}
