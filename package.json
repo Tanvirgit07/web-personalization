@@ -19,7 +19,8 @@
   "scripts": {
     "build": "tsup",
     "test": "vitest",
-    "test:run": "vitest run"
+    "test:run": "vitest run",
+    "prepublishOnly": "npm run build && npm run test:run"
   },
   "keywords": [
     "web",
@@ -30,7 +31,16 @@
     "time",
     "temperature"
   ],
+  "author": "Tanvir Ahmed",
   "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Tanvirgit07/web-personalization.git"
+  },
+  "bugs": {
+    "url": "https://github.com/Tanvirgit07/web-personalization/issues"
+  },
+  "homepage": "https://github.com/Tanvirgit07/web-personalization#readme",
   "devDependencies": {
     "tsup": "^8.5.1",
     "typescript": "^5.7.3",
