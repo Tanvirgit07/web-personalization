@@ -113,12 +113,14 @@ const result = await personalize({
 
 ---
 
-## 🧩 Advanced Granular API
+## 🧩 Advanced & Helper Functions API
 
-If you only need specific feature engines, you can import them individually:
+If you need specific feature engines or formatting helpers, you can import them individually:
 
 ```typescript
 import { 
+  getGreeting,
+  getEnvironmentMessage,
   getTimePeriod, 
   getUserLocation, 
   reverseGeocode, 
@@ -126,15 +128,23 @@ import {
   getDynamicUI 
 } from "web-personalization";
 
-// 1. Time classification
-const time = getTimePeriod(new Date()); // "morning" | "afternoon" | "evening" | "night"
+// 1. Message Helpers
+const greeting = getGreeting("morning"); 
+// Output: "Good morning"
 
-// 2. Geolocation & Weather
+const envMessage = getEnvironmentMessage("rainy", "comfortable"); 
+// Output: "It's rainy and comfortable outside"
+
+// 2. Time Classification
+const time = getTimePeriod(new Date()); 
+// Output: "morning" | "afternoon" | "evening" | "night"
+
+// 3. Geolocation & Weather
 const location = await getUserLocation();
 const geocoded = await reverseGeocode(location);
 const weather = await getCurrentWeather(location);
 
-// 3. Dynamic UI themes
+// 4. Dynamic UI Themes
 const ui = getDynamicUI(context);
 ```
 
