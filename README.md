@@ -114,16 +114,12 @@ Showcasing real-time weather theme adaptations and recommendation modal implemen
 
 | 1. Sunny Theme | 2. Rainy Theme |
 | :---: | :---: |
-| ![Sunny Theme](./screenshots/image1.png) | ![Rainy Theme](./screenshots/image2.png) |
+| ![Sunny Theme](https://raw.githubusercontent.com/Tanvirgit07/web-personalization/main/screenshots/image1.png) | ![Rainy Theme](https://raw.githubusercontent.com/Tanvirgit07/web-personalization/main/screenshots/image2.png) |
 
 | 3. Cloudy Theme | 4. Stormy Theme |
 | :---: | :---: |
-| ![Cloudy Theme](./screenshots/image3.png) | ![Stormy Theme](./screenshots/image4.png) |
+| ![Cloudy Theme](https://raw.githubusercontent.com/Tanvirgit07/web-personalization/main/screenshots/image3.png) | ![Stormy Theme](https://raw.githubusercontent.com/Tanvirgit07/web-personalization/main/screenshots/image4.png) |
 
 | 5. Night Theme |
 | :---: |
-| ![Night Theme](./screenshots/image5.png) |
-
-> 📌 **How to save your 5 screenshots:**
-> 1. Save your screenshot images inside the `screenshots/` directory.
-> 2. Name them `image1.png`, `image2.png`, `image3.png`, `image4.png`, and `image5.png`.
+| ![Night Theme](https://raw.githubusercontent.com/Tanvirgit07/web-personalization/main/screenshots/image5.png) |

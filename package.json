@@ -14,7 +14,8 @@
     }
   },
   "files": [
-    "dist"
+    "dist",
+    "screenshots"
   ],
   "scripts": {
     "build": "tsup",
