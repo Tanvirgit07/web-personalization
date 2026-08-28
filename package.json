@@ -1,6 +1,6 @@
 {
   "name": "web-personalization",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "description": "A developer-friendly web personalization SDK based on time, location, weather, and context.",
   "type": "module",
   "main": "./dist/index.cjs",

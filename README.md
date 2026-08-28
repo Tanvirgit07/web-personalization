@@ -114,12 +114,12 @@ Showcasing real-time weather theme adaptations and recommendation modal implemen
 
 | 1. Sunny Theme | 2. Rainy Theme |
 | :---: | :---: |
-| ![Sunny Theme](https://raw.githubusercontent.com/Tanvirgit07/web-personalization/main/screenshots/image1.png) | ![Rainy Theme](https://raw.githubusercontent.com/Tanvirgit07/web-personalization/main/screenshots/image2.png) |
+| ![Sunny Theme](https://cdn.jsdelivr.net/npm/web-personalization@latest/screenshots/image1.png) | ![Rainy Theme](https://cdn.jsdelivr.net/npm/web-personalization@latest/screenshots/image2.png) |
 
 | 3. Cloudy Theme | 4. Stormy Theme |
 | :---: | :---: |
-| ![Cloudy Theme](https://raw.githubusercontent.com/Tanvirgit07/web-personalization/main/screenshots/image3.png) | ![Stormy Theme](https://raw.githubusercontent.com/Tanvirgit07/web-personalization/main/screenshots/image4.png) |
+| ![Cloudy Theme](https://cdn.jsdelivr.net/npm/web-personalization@latest/screenshots/image3.png) | ![Stormy Theme](https://cdn.jsdelivr.net/npm/web-personalization@latest/screenshots/image4.png) |
 
 | 5. Night Theme |
 | :---: |
-| ![Night Theme](https://raw.githubusercontent.com/Tanvirgit07/web-personalization/main/screenshots/image5.png) |
+| ![Night Theme](https://cdn.jsdelivr.net/npm/web-personalization@latest/screenshots/image5.png) |
